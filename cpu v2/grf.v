@@ -18,7 +18,7 @@
 // Additional Comments: 
 //
 //////////////////////////////////////////////////////////////////////////////////
-module grf(
+module GRF(
     input [4:0] a1,
     input [4:0] a2,
     input [4:0] a3,
@@ -49,7 +49,7 @@ module grf(
 					register[a3] <= 0;
 			else 
 					register[a3] <= WriteData;
-			$display("@%h: $%d <= %h", WPC, a3, WriteData);
+			$display("%d@%h: $%d <= %h", $time, WPC, a3, WriteData);
 		end
 	end
 

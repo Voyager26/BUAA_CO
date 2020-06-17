@@ -34,11 +34,15 @@ module mips_tb;
 		.reset(reset)
 	);
 
-	always #10 clk = ~clk;
+	always #0.5 clk = ~clk;
 	
 	initial begin
 		clk = 0;
 		reset = 0;
+	end
+	
+	always@(*) begin
+		
 	end
 	
       

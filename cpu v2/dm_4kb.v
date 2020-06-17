@@ -27,12 +27,14 @@ module dm_4kb(
 	 input clk,
     output [31:0] DataOut
     );
+	 
 	wire [11:2] address;			
 	assign address = DataAddress[11:2];	//address save as word
 	reg[31:0] dm[1023:0];			//32bit*1024字的数据存储器
 	integer i;
+	
 	initial begin
-			for(i = 1; i < 1024; i = i + 1) dm[i] <= 0;//初始化数据存储器为0
+			for(i = 0; i < 1024; i = i + 1) dm[i] <= 0;//初始化数据存储器为0
 	end
 	assign DataOut = dm[address];		//output 
 	
@@ -43,7 +45,7 @@ module dm_4kb(
 		end
 		else if(MemWrite) begin
 			dm[address] <= DataIn;
-			$display("@%h: *%h <= %h",pc, DataAddress, DataIn);
+			$display("%d@%h: *%h <= %h", $time, pc-8, DataAddress, DataIn);
 		end
 	end
 

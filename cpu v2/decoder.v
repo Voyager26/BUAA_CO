@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date:    21:11:09 11/19/2019 
+// Create Date:    23:56:35 11/24/2019 
 // Design Name: 
-// Module Name:    pc 
+// Module Name:    decoder 
 // Project Name: 
 // Target Devices: 
 // Tool versions: 
@@ -18,20 +18,20 @@
 // Additional Comments: 
 //
 //////////////////////////////////////////////////////////////////////////////////
-module pc(
-    input [31:0] NPc,
-    input clk,
-    input reset,
-    output reg [31:0] Pc
+module decoder(
+    input [31:0] IR,
+    output [5:0] opcode,
+    output [4:0] rs,
+    output [4:0] rt,
+    output [4:0] rd,
+    output [4:0] shamt,
+    output [5:0] func,
+    output [15:0] imm16,
+    output [25:0] imm26
     );
-	initial
-		begin
-			Pc = 32'h0000_3000;	
-		end
-	always@(posedge clk)
-		begin
-			if(reset) Pc = 32'h0000_3000;
-			else Pc = NPc;
-		end
+	
+	assign {opcode,rs,rt,rd,shamt,func} = IR;
+	assign imm16 = IR[15:0];
+	assign imm26 = IR[25:0];
 
 endmodule
