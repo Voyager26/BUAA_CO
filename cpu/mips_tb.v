@@ -4,10 +4,10 @@
 // Company: 
 // Engineer:
 //
-// Create Date:   01:28:37 12/19/2019
+// Create Date:   23:25:25 11/19/2019
 // Design Name:   mips
-// Module Name:   C:/ise programmar/cpuv4.0/mips_tb.v
-// Project Name:  cpuv4.0
+// Module Name:   C:/ise programmar/cpu_v1.0/mips_tb.v
+// Project Name:  cpu_v1.0
 // Target Device:  
 // Tool versions:  
 // Description: 
@@ -33,15 +33,18 @@ module mips_tb;
 		.clk(clk), 
 		.reset(reset)
 	);
-	always #1 clk = ~clk;
+
+	always #0.5 clk = ~clk;
+	
 	initial begin
-		// Initialize Inputs
 		clk = 0;
 		reset = 0;
-        
-		// Add stimulus here
-
 	end
+	
+	always@(*) begin
+		
+	end
+	
       
 endmodule
 
