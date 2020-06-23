@@ -3,7 +3,7 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date:    01:10:21 11/25/2019 
+// Create Date:    02:09:28 11/30/2019 
 // Design Name: 
 // Module Name:    DE 
 // Project Name: 
@@ -18,58 +18,40 @@
 // Additional Comments: 
 //
 //////////////////////////////////////////////////////////////////////////////////
-module DE(
-	 input clk,
-	 input reset,
-	 input clr,
-    input [31:0] V1,
-    input [31:0] V2,
-    input [31:0] EXT32,
-    input [31:0] PC4,
-    input [4:0] Rs,
-    input [4:0] Rt,
-    input [4:0] Rd,
-    input [31:0] IR,
-    output reg [31:0] V1out,
-    output reg [31:0] V2out,
-    output reg[31:0] EXT32out,
-    output reg [31:0] PC4out,
-    output reg [4:0] Rsout,
-    output reg [4:0] Rtout,
-    output reg [4:0] Rdout,
-    output reg [31:0] IRout
+module de(
+	input clk,
+	input reset,
+	input clr,
+	input [31:0] nInstr_E,
+	input [31:0] nRS_E,
+	input [31:0] nRT_E,
+	input [31:0] nEXT_E,
+	input [31:0] nPC8_E,
+	input [31:0] ns_E,
+	output reg [31:0] Instr_E = 0,
+	output reg [31:0] RS_E = 0,
+	output reg [31:0] RT_E = 0,
+	output reg [31:0] EXT_E = 0,
+	output reg [31:0] PC8_E = 0,
+	output reg [31:0] s_E = 0
     );
-	initial begin
-		V1out = 0;
-		V2out = 0;
-		EXT32out = 0;
-		PC4out = 32'h3004;
-    	Rsout = 0;
-		Rtout = 0;
-		Rdout = 0;
-		IRout = 0;
-	end
 	
 	always @(posedge clk) begin
 		if (reset || clr) begin
-			V1out = 0;
-			V2out = 0;
-			EXT32out = 0;
-			PC4out = 32'h3004;
-			Rsout = 0;
-			Rtout = 0;
-			Rdout = 0;
-			IRout = 0;
+			Instr_E = 0;
+			RS_E = 0;
+			RT_E = 0;
+			EXT_E = 0;
+			PC8_E = 0;
+			s_E = 0;
 		end
-		else begin
-			V1out = V1;
-			V2out = V2;
-			EXT32out = EXT32;
-			PC4out = PC4;
-			Rsout = Rs;
-			Rtout = Rt;
-			Rdout = Rd;
-			IRout = IR;
+		else begin	
+			Instr_E = nInstr_E;
+			RS_E = nRS_E;
+			RT_E = nRT_E;
+			EXT_E = nEXT_E;
+			PC8_E = nPC8_E;
+			s_E = ns_E;
 		end
 	end
 

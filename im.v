@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date:    00:03:20 11/18/2019 
+// Create Date:    01:25:21 11/20/2019 
 // Design Name: 
-// Module Name:    im_4kb 
+// Module Name:    IM 
 // Project Name: 
 // Target Devices: 
 // Tool versions: 
@@ -18,18 +18,22 @@
 // Additional Comments: 
 //
 //////////////////////////////////////////////////////////////////////////////////
-module im_4kb(
-    input [31:0] Pc,
-    output reg [31:0] IR
+module im(
+	input [31:0] A,
+	output [31:0] Instr
     );
-	 reg [31:0] im[1023:0];	//im 32 * 1024bit, 
-	 wire [9:0] Addr;			//addr in rom
-	 assign Addr = Pc[11:2];	//Pc / 4 (true addr)
-	initial begin
-		$readmemh("code.txt", im);	//code to imm
+	
+	integer i;
+	
+	reg [31:0] ROM[4095:0];
+	
+	initial begin 
+		for (i = 0; i < 4096; i = i + 1)
+			ROM[i] = 0;
+		$readmemh("code.txt", ROM);
 	end
 	
-	always@(*) begin
-		IR = im[Addr];
-	end
+	wire [31:0] A1 = A - 32'h3000;		//Ƭѡ
+	assign Instr = ROM[A1[13:2]];
+	
 endmodule

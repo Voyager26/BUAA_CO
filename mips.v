@@ -1,9 +1,17 @@
 `timescale 1ns / 1ps
+`define op 31:26
+`define funct 5:0
+`define imm26 25:0
+`define imm16 15:0
+`define rs 25:21
+`define rt 20:16
+`define rd 15:11
+`define s 10:6
 //////////////////////////////////////////////////////////////////////////////////
 // Company: 
 // Engineer: 
 // 
-// Create Date:    19:09:56 11/17/2019 
+// Create Date:    00:35:50 11/30/2019
 // Design Name: 
 // Module Name:    mips 
 // Project Name: 
@@ -18,457 +26,507 @@
 // Additional Comments: 
 //
 //////////////////////////////////////////////////////////////////////////////////
-module mips(
-    input clk,
-    input reset
+	module mips(
+	input clk,
+	input reset
     );
-	 
-///////////HZD
-	wire PCEnD;
-	wire EnD;
-	wire FlushD;
-	wire [2:0] ForwardRtD;
-	wire [2:0] ForwardRsD;
-	wire FlushE;
-	wire [2:0] ForwardRtE;
-	wire [2:0] ForwardRsE;
-	wire DMWrW;
-	wire RFWrE;
-	wire DMWrM;
-	wire RFWrM;
-	wire RFWrW;
-	wire Rs_D;
-	wire Rt_D;
-	wire Rs_E;
-	wire Rt_E;
-	wire Dst_E;
-	wire Dst_M;
-	wire Dst_W;
-	wire ForwardDM;
 	
 	
-///////////////////////////////// F ////////////////////////////////////////////
+	//////////////////////////// F //////////////////////////////
 	//PC
-	wire [31:0] PC_F;
-	wire [31:0] nPC_F;
-	wire PC_En = PCEnD;
-	pc Pc(nPC_F, clk, reset, PC_En, PC_F);
-	/*
-	 input [31:0] NPc,
-    input clk,
-    input reset,
-	 input en,
-    output reg [31:0] Pc
-	*/
+	wire [31:0] PC;
+	wire [31:0] nPC;
+	wire PC_En;
+	
+	pc Pc(
+		.clk(clk),
+		.reset(reset),
+		.En(PC_En),
+		.PC(PC),
+		.nPC(nPC)
+		);
 	
 	//IM
-	wire [31:0] IR_F;
-	im_4kb im(PC_F, IR_F);
-	/*
-	 input [31:0] Pc,
-    output reg [31:0] IR
-	*/
+	wire [31:0] Instr_F;
+	
+	im IM(
+		.A(PC),
+		.Instr(Instr_F)
+		);
 	
 	//ADD4, ADD8
-	wire [31:0] PC4_F = PC_F + 4;
-	wire [31:0] PC8_F = PC_F + 8;
-		
-///////////////////////////// D /////////////////////////////////////////
-	//Regsiter FD
-	wire [31:0] PC4_D;
+	wire [31:0] PC8_F = PC + 8;
+	
+	
+	///////////////////////// D ////////////////////////////
+	
+	
+	//FD
+	wire [31:0] Instr_D;
 	wire [31:0] PC8_D;
-   wire [31:0] IR_D;
-	Fd fd(IR_F, PC4_F, PC8_F, EnD, clk, reset, FlushD, PC4_D, PC8_D, IR_D);
-	/*
-	 input [31:0] IR_F,
-    input [31:0] PC4_F,
-	 input [31:0] PC8_F,
-    input en,
-    input clk,
-	 input reset,
-    input clr,
-    output reg [31:0] PC4_D,
-	 output reg [31:0] PC8_D,
-    output reg [31:0] IR_D
-	*/
+	wire FD_En;
 	
-	 //decodeIR
-    wire [5:0] opcode_D;
-    wire [4:0] rs_D;
-    wire [4:0] rt_D;
-    wire [4:0] rd_D;
-    wire [4:0] shamt_D;
-    wire [5:0] func_D;
-    wire [15:0] imm16_D;
-    wire [25:0] imm26_D;
-	decoder decoderD(IR_D, opcode_D, rs_D, rt_D, rd_D, shamt_D, func_D, imm16_D, imm26_D);
-	/*
-	 input [31:0] IR,
-    output [5:0] opcode,
-    output [4:0] rs,
-    output [4:0] rt,
-    output [4:0] rd,
-    output [4:0] shamt,
-    output [5:0] func,
-    output [15:0] imm16,
-    output [25:0] imm26
-	*/
+	fd FD(
+		.clk(clk),
+		.reset(reset),
+		.En(FD_En),
+		.nInstr_D(Instr_F),
+		.nPC8_D(PC8_F),
+		.Instr_D(Instr_D),
+		.PC8_D(PC8_D)
+		);
 	
-	//grf
-	wire [4:0] grf_a3;
-	wire [31:0] grf_WD;
-	wire RegWrite;
-	wire [31:0] RD1_D;
-	wire [31:0] RD2_D;
-	wire [31:0] WPC;
-	GRF grf(rs_D, rt_D, grf_a3, grf_WD, clk, reset, RegWrite, RD1_D, RD2_D, WPC);
-	/*
-	 input [4:0] a1,
-    input [4:0] a2,
-    input [4:0] a3,
-    input [31:0] WriteData,
-    input clk,
-    input reset,
-    input regWrite,
-    output [31:0] RD1,
-    output [31:0] RD2,
-    input [31:0] WPC
-	*/
+	//CTRL_D
+	wire [2:0] BranchSel;
+	wire [1:0] EXTsel;
+	wire [2:0] PcSel;
 	
-	//ext
-	wire [3:0] ext_op_D;
-	wire [31:0] imm32_D;
-	EXT ext(imm16_D, ext_op_D, imm32_D);
-	/*
-	 input [15:0] imm16,
-    input [3:0] ext_op,
-    output reg [31:0] imm32
-	*/
+	ctrl CTRL_D(
+		.Instr(Instr_D),
+		.BranchSel(BranchSel),
+		.EXTsel(EXTsel),
+		.PcSel(PcSel)
+		);
 	
-	//MUX_RsD
-	wire [31:0] fowardRs_D1;
-	wire [31:0] fowardRs_D2;
-	wire [31:0] fowardRs_D3;
-	wire [31:0] fowardRs_D4;
-	wire [31:0] fowardRs_D5;
-	wire [31:0] fowardRs_D6;
-	wire [31:0] fowardRs_D7;
-	wire [31:0] V1_D;
-	mux32in8 mux_Rs_D(ForwardRsD, RD1_D, fowardRs_D1, fowardRs_D2, fowardRs_D3, fowardRs_D4, fowardRs_D5, fowardRs_D6, fowardRs_D7, V1_D);
-	/*
-	  input [1:0]ctl,
-	  input [31:0] in0,	
-	  input [31:0] in1, 	
-	  input [31:0] in2,	
-	  input [31:0] in3,		
-	  output reg [31:0] out
-	*/
+	//GRF
+	wire [4:0] GRF_A1 = Instr_D[`rs];
+	wire [4:0] GRF_A2 = Instr_D[`rt];
+	wire [4:0] GRF_A3;
+	wire [31:0] GRF_WD;
+	wire [31:0] GRF_RD1;
+	wire [31:0] GRF_RD2;
+	wire GRF_WE;
+	wire [31:0] PC_W;
 	
-	//MUX_RtD
-	wire [31:0] fowardRt_D1;
-	wire [31:0] fowardRt_D2;
-	wire [31:0] fowardRt_D3;
-	wire [31:0] fowardRt_D4;
-	wire [31:0] fowardRt_D5;
-	wire [31:0] fowardRt_D6;
-	wire [31:0] fowardRt_D7;
-	wire [31:0] V2_D;
-	mux32in8 mux_Rt_D(ForwardRtD, RD2_D, fowardRt_D1, fowardRt_D2, fowardRt_D3, fowardRt_D4, fowardRt_D5, fowardRt_D6, fowardRt_D7, V2_D);
-	/*
-	  input [1:0]ctl,
-	  input [31:0] in0,	
-	  input [31:0] in1, 	
-	  input [31:0] in2,	
-	  input [31:0] in3,		
-	  output reg [31:0] out
-	*/
+	grf GRF(
+		.clk(clk),
+		.reset(reset),
+		.WE(GRF_WE),
+		.A1(GRF_A1),
+		.A2(GRF_A2),
+		.A3(GRF_A3),
+		.WD(GRF_WD),
+		.PC_W(PC_W),
+		.RD1(GRF_RD1),
+		.RD2(GRF_RD2)
+		);
 	
-	//ctl_D
-	wire J_D;
-	wire Jal_D;
-	wire Jr_D;
-	wire [2:0] NpcSel_D;
-	ctl2 ctl_D(
-			.Op(opcode_D),
-			.Funct(func_D),
-			.J(J_D),
-			.Jal(Jal_D),
-			.Jr(Jr_D),
-			.NpcSel(NpcSel_D),
-			.ExtOp(ext_op_D)
-				);
+	//RS_D_MUX
+	wire [31:0] RS_D_MUX_In1;
+	wire [31:0] RS_D_MUX_In2;
+	wire [31:0] RS_D_MUX_In3;
+	wire [31:0] RS_D_MUX_In4;
+	wire [31:0] RS_D_MUX_In5;
+	wire [31:0] RS_D_MUX_In6;
+	wire [2:0] RS_D_MUX_Op;
+	wire [31:0] RS_D_MUX_Out;
 	
-	//npcsel
-	wire AddNop;
-	NPC npc(PC4_F, NpcSel_D, V1_D, V2_D, J_D, Jr_D, V1_D, imm32_D, imm26_D, nPC_F, AddNop);
-	/*
-	 input [31:0] pc4,
-    input npc_sel,
-	 input [31:0] cmp1,
-	 input [31:0] cmp2,
-    input jump,
-	 input jr,
-	 input [31:0] gpr,
-    input [31:0] imm32,
-	 input [25:0] imm26,
-    output reg [31:0] npc
-	 output reg AddNop
-	*/
+	mux8 #(32) RS_D_MUX(
+		.In0(GRF_RD1),
+		.In1(RS_D_MUX_In1),
+		.In2(RS_D_MUX_In2),
+		.In3(RS_D_MUX_In3),
+		.In4(RS_D_MUX_In4),
+		.In5(RS_D_MUX_In5),
+		.In6(RS_D_MUX_In6),
+		.Op(RS_D_MUX_Op),
+		.Out(RS_D_MUX_Out)
+		);
 	
-/////////////////////// E ///////////////////////////
-	//Regsiter DE
-	 wire	[31:0] V1out;
-    wire [31:0] V2out;
-    wire [31:0] EXT32_E;
-    wire [31:0] PC8_E;
-    wire [4:0] rs_E;
-    wire [4:0] rt_E;
-    wire [4:0] rd_E;
-    wire [31:0] IR_E;
-	DE de(clk, reset, FlushE || AddNop, V1_D, V2_D, imm32_D, PC8_D, rs_D, rt_D, rd_D, IR_D, V1out, V2out, EXT32_E, PC8_E, rs_E, rt_E, rd_E, IR_E);
-	/*
-	input clk,
-	 input reset,
-	 input clr,
-    input [31:0] V1,
-    input [31:0] V2,
-    input [31:0] EXT32,
-    input [31:0] PC4,
-    input [4:0] Rs,
-    input [4:0] Rt,
-    input [4:0] Rd,
-    input [31:0] IR,
-    output reg [31:0] V1out,
-    output reg [31:0] V2out,
-    output reg[31:0] EXT32out,
-    output reg [31:0] PC4,
-    output reg [4:0] Rsout,
-    output reg [4:0] Rtout,
-    output reg [4:0] Rdout,
-    output reg [31:0] IRout
-	 */
-	 
-	 wire [5:0] opcode_E;
-    wire [5:0] func_E;
-	 wire [4:0] shamt_E;
-	decoder decoderE(
-						.IR(IR_E), 
-						.opcode(opcode_E), 
-						.func(func_E),
-						.shamt(shamt_E)
-						);
+	//RT_D_MUX
+	wire [31:0] RT_D_MUX_In1;
+	wire [31:0] RT_D_MUX_In2;
+	wire [31:0] RT_D_MUX_In3;
+	wire [31:0] RT_D_MUX_In4;
+	wire [31:0] RT_D_MUX_In5;
+	wire [31:0] RT_D_MUX_In6;
+	wire [2:0] RT_D_MUX_Op;
+	wire [31:0] RT_D_MUX_Out;
 	
-	//cltE
-	wire [3:0] Aluop;
-	wire AluSrc;
-	wire [1:0] RegDst;
-	ctl2 cltE(
-				.Op(opcode_E),
-				.Funct(func_E),
-				.AluOp(Aluop),
-				.AluSrc(AluSrc),
-				.RegDst(RegDst)
-				);
-	 
-	 //MUX_RsE
-	wire [31:0] fowardRs_E1;
-	wire [31:0] fowardRs_E2;
-	wire [31:0] fowardRs_E3;
-	wire [31:0] fowardRs_E4;
-	wire [31:0] fowardRs_E5;
-	wire [31:0] fowardRs_E6;
-	wire [31:0] fowardRs_E7;
-	wire [31:0] V1_E;
-	mux32in8 mux_Rs_E(ForwardRsE, V1out, fowardRs_E1, fowardRs_E2, fowardRs_E3, fowardRs_E4, fowardRs_E5, fowardRs_E6, fowardRs_E7, V1_E);
-	/*
-	  input [1:0]ctl,
-	  input [31:0] in0,	
-	  input [31:0] in1, 	
-	  input [31:0] in2,	
-	  input [31:0] in3,		
-	  output reg [31:0] out
-	*/
+	mux8 #(32) RT_D_MUX(
+		.In0(GRF_RD2),
+		.In1(RT_D_MUX_In1),
+		.In2(RT_D_MUX_In2),
+		.In3(RT_D_MUX_In3),
+		.In4(RT_D_MUX_In4),
+		.In5(RT_D_MUX_In5),
+		.In6(RT_D_MUX_In6),
+		.Op(RT_D_MUX_Op),
+		.Out(RT_D_MUX_Out)
+		);
 	
-	//MUX_RtE
-	wire [31:0] fowardRt_E1;
-	wire [31:0] fowardRt_E2;
-	wire [31:0] fowardRt_E3;
-	wire [31:0] fowardRt_E4;
-	wire [31:0] fowardRt_E5;
-	wire [31:0] fowardRt_E6;
-	wire [31:0] fowardRt_E7;
-	wire [31:0] V2_E;
-	mux32in8 mux_Rt_E(ForwardRtE, V2out, fowardRt_E1, fowardRt_E2, fowardRt_E3, fowardRt_E4, fowardRt_E5, fowardRt_E6, fowardRt_E7, V2_E);
-	
-	//MUX_ALU
-	wire [31:0] ALUB;
-	mux32in2 mux_ALU(AluSrc, V2_E, EXT32_E, ALUB);
-	/*
-	  input ctl,
-	  input [31:0] in0,	
-	  input [31:0] in1	
-	  output reg [31:0] out
-	*/
-	
-	//MUX_RFAddr
-	wire [4:0] RFAddr_E;
-	mux5 mux_RDAddr(RegDst, rt_E, rd_E, 5'b11111, RFAddr_E);
-	 
-	 //alu
-	 wire [31:0] AluResult;
-	 ALU alu(V1_E, ALUB, shamt_E, Aluop, AluResult);
-	 /*
-	 input [31:0] a,
-    input [31:0] b,
-	 input [10:6] shamt,
-    input [3:0] aluctr,
-    output reg [31:0] result,
-	 */
+	//EXT
+	wire [31:0] EXT_Out;
 
-/////////////////////// M ///////////////////////////	 
-	 //Regsiter EM
-	 wire [31:0] AluO_M;
-	 wire [31:0] WriteData_M;
-	 wire [4:0] RFAddr_M;
-	 wire [31:0] PC8_M;
-	 wire [31:0] IR_M;
-	 wire [31:0] Ext32_M;
-	 EM em(clk, reset, AluResult, V2_E, EXT32_E, PC8_E, RFAddr_E, IR_E, AluO_M, WriteData_M, Ext32_M, PC8_M, RFAddr_M, IR_M);
-	 /*
-	 input clk,
-	 input reset,
-    input [31:0] ALUResult,
-    input [31:0] MemData,
-	 input [31:0] ext,
-    input [31:0] PC4,
-    input [4:0] RFAddr,
-    input [31:0] IR,
-    output reg [31:0] ALUResultO,
-    output reg [31:0] MemDataO,
-	 output reg [31:0] exto,
-    output reg [31:0] PC4O,
-    output reg [4:0] RFAddrO,
-    output reg [31:0] IRO
-	 */
-	 
-	 //ctlEM
-	 wire MemWrite;
-	 ctl2 ctlEM(
-				.Op(IR_M[31:26]),
-				.Funct(IR_M[5:0]),
-				.MemWrite(MemWrite)
-				);
-		
-	 //MUX_DM
-	wire [31:0] forwardDmin1;
-	wire [31:0] DM;
-	mux32in2 mux_DM(ForwardDM, WriteData_M, forwardDmin1, DM);
-	/*
-	  input ctl,
-	  input [31:0] in0,	
-	  input [31:0] in1	
-	  output reg [31:0] out
-	*/
-		
-	 //dm
-	 wire [31:0] DataOut_M;
-	 dm_4kb dm(PC8_M, AluO_M, MemWrite, reset, DM, clk, DataOut_M);
-	 /*
-	 input [31:0] pc,
-    input [31:0] DataAddress,
-    input MemWrite,
-    input reset,
-    input [31:0] DataIn,
-	 input clk,
-    output [31:0] DataOut
-	 */
-	 
-/////////////////////// W ///////////////////////////	
-	//Regsiter MW
-	 wire [31:0] ALUResult_W;
-    wire [31:0] MemData_W;
-    wire [31:0] PC8_W;
-    wire [31:0] IR_W;
-    wire [4:0] RFAddr_W;
-	MW mw(clk, reset, AluO_M, DataOut_M, PC8_M, IR_M, RFAddr_M, ALUResult_W, MemData_W, PC8_W, IR_W, RFAddr_W);
-	/*
-	 input clk,
-	 input reset,
-	 input [31:0] ALUResult,
-    input [31:0] MemData,
-    input [31:0] PC4,
-    input [31:0] IR,
-    input [4:0] RFAddr,
-    output [31:0] ALUResultO,
-    output [31:0] MemDataO,
-    output [31:0] PC4O,
-    output [31:0] IRO,
-    output [4:0] RFAddrO
-	*/
+	ext EXT(
+		.In(Instr_D[`imm16]),
+		.Op(EXTsel),
+		.Out(EXT_Out)
+		);
 	
-	//ctlW
-	wire [1:0] MemSel;
-	ctl2 ctlW(
-				.Op(IR_W[31:26]),
-				.Funct(IR_W[5:0]),
-				.MemToReg(MemSel),
-				.RegWrite(RegWrite)
-				);
-	//MUX_RFMemSel
-	mux32in4 mux_RegMem_W(MemSel, ALUResult_W, MemData_W, PC8_W, 32'b0, grf_WD);
-	/*
-	  input [1:0]ctl,
-	  input [31:0] in0,	
-	  input [31:0] in1, 	
-	  input [31:0] in2,	
-	  input [31:0] in3,		
-	  output reg [31:0] out
-	*/
-	assign grf_a3 = RFAddr_W;
-	assign WPC = PC8_W - 8;
+	//npc
+	wire [31:0] BranchA;
+	wire [31:0] JumpA;
 	
-/////////////////////// Hazard ///////////////////////////	
-	Hzd hazard(IR_D, IR_E, IR_M, IR_W, RFAddr_E, RFAddr_M, RFAddr_W, PCEnD, EnD, FlushD, ForwardRtD, ForwardRsD, FlushE, ForwardRtE, ForwardRsE, ForwardDM);
-/*
-	 input [31:0] IR_D,
-    input [31:0] IR_E,
-    input [31:0] IR_M,
-    input [31:0] IR_W,
-	 input [4:0] WriteAddr_E,
-	 input [4:0] WriteAddr_M,
-	 input [4:0] WriteAddr_W,
-    output PCEnD,
-    output EnD,
-    output FkushD,
-    output [2:0] ForwardRtD,
-    output [2:0] ForwardRsD,
-    output FlushE,
-    output [2:0] ForwardRtE,
-    output [2:0] ForwardRsE,
-	 output ForwardWD
-*/
+	npc NPC(
+		.clk(clk),
+		.pc(PC),
+		.ImmB(EXT_Out),
+		.ImmJ(Instr_D[`imm26]),
+		.Cmp1(RS_D_MUX_Out),
+		.Cmp2(RT_D_MUX_Out),
+		.BranchOp(BranchSel),
+		.grf(RS_D_MUX_Out),
+		.Op(PcSel),
+		.npc(nPC)
+		);
+	
+	
+	
+	////////////////////////// E /////////////////////////////
+	
+	
+	//DE
+	wire DE_clr;
+	wire [31:0] Instr_E;
+	wire [31:0] RS_E;
+	wire [31:0] RT_E;
+	wire [31:0] EXT_E;
+	wire [31:0] PC8_E;
+	wire [31:0] s_E;
+	
+	de DE(
+		.clk(clk),
+		.reset(reset),
+		.clr(DE_clr),
+		.nInstr_E(Instr_D),
+		.nRS_E(RS_D_MUX_Out),
+		.nRT_E(RT_D_MUX_Out),
+		.nEXT_E(EXT_Out),
+		.nPC8_E(PC8_D),
+		.ns_E(Instr_D[`s]),
+		.Instr_E(Instr_E),
+		.RS_E(RS_E),
+		.RT_E(RT_E),
+		.EXT_E(EXT_E),
+		.PC8_E(PC8_E),
+		.s_E(s_E)
+		);
+	
+	//CTRL_E
+	wire [3:0] ALUsel;
+	wire ALU_A_MUXsel;
+	wire ALU_B_MUXsel;
+	wire [2:0] MDUsel;
+	wire Start;
+	wire MDU_RDsel;
+	wire ALU_MDU_MUXsel;
+	wire [1:0] RegDst;
+	
+	ctrl CTRL_E(
+		.Instr(Instr_E),
+		.ALUsel(ALUsel),
+		.ALU_A_MUXsel(ALU_A_MUXsel),
+		.ALU_B_MUXsel(ALU_B_MUXsel),
+		.MDUsel(MDUsel),
+		.Start(Start),
+		.RegDst(RegDst),
+		.MDU_RDsel(MDU_RDsel),
+		.ALU_MDU_MUXsel(ALU_MDU_MUXsel)
+		);
+		
+	//RS_E_MUX
+	wire [31:0] RS_E_MUX_In1;
+	wire [31:0] RS_E_MUX_In2;
+	wire [31:0] RS_E_MUX_In3;
+	wire [31:0] RS_E_MUX_In4;
+	wire [2:0] RS_E_MUX_Op;
+	wire [31:0] RS_E_MUX_Out;
+	
+	mux8 #(32) RS_E_MUX(
+		.In0(RS_E),
+		.In1(RS_E_MUX_In1),
+		.In2(RS_E_MUX_In2),
+		.In3(RS_E_MUX_In3),
+		.In4(RS_E_MUX_In4),
+		.Op(RS_E_MUX_Op),
+		.Out(RS_E_MUX_Out)
+		);
+	
+	//RT_E_MUX
+	wire [31:0] RT_E_MUX_In1;
+	wire [31:0] RT_E_MUX_In2;
+	wire [31:0] RT_E_MUX_In3;
+	wire [31:0] RT_E_MUX_In4;
+	wire [2:0] RT_E_MUX_Op;
+	wire [31:0] RT_E_MUX_Out;
+	
+	mux8 #(32) RT_E_MUX(
+		.In0(RT_E),
+		.In1(RT_E_MUX_In1),
+		.In2(RT_E_MUX_In2),
+		.In3(RT_E_MUX_In3),
+		.In4(RT_E_MUX_In4),
+		.Op(RT_E_MUX_Op),
+		.Out(RT_E_MUX_Out)
+		);
+		
+	//ALU_A_MUX
+	wire [31:0] ALU_A_MUX_Out;
+	
+	mux2 #(32) ALU_A_MUX(
+		.In0(RS_E_MUX_Out),
+		.In1(s_E),
+		.Op(ALU_A_MUXsel),
+		.Out(ALU_A_MUX_Out)
+		);
+	
+	//ALU_B_MUX
+	wire [31:0] ALU_B_MUX_Out;
+	
+	mux2 #(32) ALU_B_MUX(
+		.In0(RT_E_MUX_Out),
+		.In1(EXT_E),
+		.Op(ALU_B_MUXsel),
+		.Out(ALU_B_MUX_Out)
+		);
+	
+	//ALU
+	wire [31:0] ALU_Out;
+	
+	alu ALU(
+		.A(ALU_A_MUX_Out),
+		.B(ALU_B_MUX_Out),
+		.Op(ALUsel),
+		.Out(ALU_Out)
+		);
+	
+	//MDU
+	wire [31:0] MDU_Out;
+	wire Busy;
+	
+	mdu MDU(
+		.clk(clk),
+		.reset(reset),
+		.Start(Start),
+		.RDsel(MDU_RDsel),
+		.A(RS_E_MUX_Out),
+		.B(RT_E_MUX_Out),
+		.Op(MDUsel),
+		.Out(MDU_Out),
+		.Busy(Busy)
+		);
+	
+	//ALU_MDU_MUX
+	wire [31:0] ALU_MDU_MUX_Out;
+	
+	mux2 #(32) ALU_MDU_MUX(
+		.In0(ALU_Out),
+		.In1(MDU_Out),
+		.Op(ALU_MDU_MUXsel),
+		.Out(ALU_MDU_MUX_Out)
+		);
+		
+	//GRF_A3_MUX
+	wire [4:0] A3_E;
+	
+	mux4 #(5) GRF_A3_MUX(
+		.In0(Instr_E[`rd]),
+		.In1(Instr_E[`rt]),
+		.In2(5'd31),
+		.Op(RegDst),
+		.Out(A3_E)
+		);
+	
+	/////////////////////////////// M //////////////////////////////////
+	
+	
+	//EM
+	wire [31:0] Instr_M;
+	wire [31:0] RT_M;
+	wire [31:0] ALU_M;
+	wire [31:0] EXT_M;
+	wire [31:0] PC8_M;
+	wire [4:0] A3_M;
+	
+	em EM(
+		.clk(clk),
+		.reset(reset),
+		.nInstr_M(Instr_E),
+		.nRT_M(RT_E_MUX_Out),
+		.nALU_M(ALU_MDU_MUX_Out),
+		.nEXT_M(EXT_E),
+		.nPC8_M(PC8_E),
+		.nWBA_M(A3_E),
+		.Instr_M(Instr_M),
+		.RT_M(RT_M),
+		.ALU_M(ALU_M),
+		.EXT_M(EXT_M),
+		.PC8_M(PC8_M),
+		.WBA_M(A3_M)
+		);
+	
+	//CTRL_M
+	wire DM_WE;
+	wire [1:0] StoreType;
+	wire [2:0] LoadType;
+	
+	ctrl CTRL_M(
+		.Instr(Instr_M),
+		.DM_WE(DM_WE),
+		.StoreType(StoreType),
+		.LoadType(LoadType)
+		);
+	
+	//RT_M_MUX
+	wire [31:0] RT_M_MUX_In1;
+	wire RT_M_MUX_Op;
+	wire [31:0] RT_M_MUX_Out;
+	
+	mux2 #(32) RT_M_MUX(
+		.In0(RT_M),
+		.In1(RT_M_MUX_In1),
+		.Op(RT_M_MUX_Op),
+		.Out(RT_M_MUX_Out)
+		);
+	
+	//DM
+	wire [31:0] DM_RD;
+	
+	dm DM(
+		.clk(clk),
+		.reset(reset),
+		.WE(DM_WE),
+		.StoreType(StoreType),
+		.LoadType(LoadType),
+		.A(ALU_M),
+		.WD(RT_M_MUX_Out),
+		.PC_M(PC8_M - 8),
+		.RD(DM_RD)
+		);
+	
+	
+	/////////////////////////////// W ///////////////////////////////
+	
+	
+	//MW
+	wire [31:0] Instr_W;
+	wire [31:0] ALU_W;
+	wire [31:0] DM_W;
+	wire [31:0] EXT_W;
+	wire [31:0] PC8_W;
+	wire [4:0] A3_W;
+	
+	mw MW(
+		.clk(clk),
+		.reset(reset),
+		.nInstr_W(Instr_M),
+		.nALU_W(ALU_M),
+		.nDM_W(DM_RD),
+		.nEXT_W(EXT_M),
+		.nPC8_W(PC8_M),
+		.nWBA_W(A3_M),
+		.Instr_W(Instr_W),
+		.ALU_W(ALU_W),
+		.DM_W(DM_W),
+		.EXT_W(EXT_W),
+		.PC8_W(PC8_W),
+		.WBA_W(A3_W)
+		);
+	
+	assign PC_W = PC8_W - 8;
+	
+	//CTRL_W
+	wire [1:0] GRF_WD_MUXsel;
+	
+	ctrl CTRL_W(
+		.Instr(Instr_W),
+		.GRF_WD_MUXsel(GRF_WD_MUXsel),
+		.GRF_WE(GRF_WE)
+		);
+	
+	//GRF_WD_MUX
+	wire [31:0] GRF_WD_MUX_Out;
+	
+	mux4 #(32) GRF_WD_MUX(
+		.In0(ALU_W),
+		.In1(DM_W),
+		.In2(EXT_W),
+		.In3(PC8_W),
+		.Op(GRF_WD_MUXsel),
+		.Out(GRF_WD_MUX_Out)
+		);
+		
+	assign GRF_A3 = A3_W;
+	assign GRF_WD = GRF_WD_MUX_Out;
+	
+	
+	//////////////////////////// hazard /////////////////////////////////
+	
+	
+	wire [2:0] RS_D_MUXsel;
+	wire [2:0] RT_D_MUXsel;
+	wire [2:0] RS_E_MUXsel;
+	wire [2:0] RT_E_MUXsel;
+	wire RT_M_MUXsel;
+	wire Stall;
+	
+	hzd HZD(
+		.IR_D(Instr_D),
+		.IR_E(Instr_E),
+		.WriteAddr_E(A3_E),
+		.IR_M(Instr_M),
+		.WriteAddr_M(A3_M),
+		.IR_W(Instr_W),
+		.Start(Start),
+		.Busy(Busy),
+		.RS_D_MUXsel(RS_D_MUXsel),
+		.RT_D_MUXsel(RT_D_MUXsel),
+		.RS_E_MUXsel(RS_E_MUXsel),
+		.RT_E_MUXsel(RT_E_MUXsel),
+		.RT_M_MUXsel(RT_M_MUXsel),
+		.Stall(Stall)
+		);
+	
 	//RS_D_MUX forward
-	assign fowardRs_D1 = PC8_E;
-	assign fowardRs_D2 = AluO_M;
-	assign fowardRs_D3 = PC8_M;
-	assign fowardRs_D4 = grf_WD;
+	assign RS_D_MUX_In1 = EXT_E;
+	assign RS_D_MUX_In2 = PC8_E;
+	assign RS_D_MUX_In3 = ALU_M;
+	assign RS_D_MUX_In4 = EXT_M;
+	assign RS_D_MUX_In5 = PC8_M;
+	assign RS_D_MUX_In6 = GRF_WD_MUX_Out;
+	assign RS_D_MUX_Op = RS_D_MUXsel;
 	
 	//RT_D_MUX forward
-	assign fowardRt_D1 = PC8_E;
-	assign fowardRt_D2 = AluO_M;
-	assign fowardRt_D3 = PC8_M;
-	assign fowardRt_D4 = grf_WD;
+	assign RT_D_MUX_In1 = EXT_E;
+	assign RT_D_MUX_In2 = PC8_E;
+	assign RT_D_MUX_In3 = ALU_M;
+	assign RT_D_MUX_In4 = EXT_M;
+	assign RT_D_MUX_In5 = PC8_M;
+	assign RT_D_MUX_In6 = GRF_WD_MUX_Out;
+	assign RT_D_MUX_Op = RT_D_MUXsel;
 	
 	//RS_E_MUX forward
-	assign fowardRs_E1 = AluO_M;
-	assign fowardRs_E2 = PC8_M;
-	assign fowardRs_E3 = grf_WD;
+	assign RS_E_MUX_In1 = ALU_M;
+	assign RS_E_MUX_In2 = EXT_M;
+	assign RS_E_MUX_In3 = PC8_M;
+	assign RS_E_MUX_In4 = GRF_WD_MUX_Out;
+	assign RS_E_MUX_Op = RS_E_MUXsel;
 	
 	//RT_E_MUX forward
-	assign fowardRt_E1 = AluO_M;
-	assign fowardRt_E2 = PC8_M;
-	assign fowardRt_E3 = grf_WD;
+	assign RT_E_MUX_In1 = ALU_M;
+	assign RT_E_MUX_In2 = EXT_M;
+	assign RT_E_MUX_In3 = PC8_M;
+	assign RT_E_MUX_In4 = GRF_WD_MUX_Out;
+	assign RT_E_MUX_Op = RT_E_MUXsel;
 	
-	//ForwardDM forward
-	assign forwardDmin1 = grf_WD;
+	//RT_M_MUX forward
+	assign RT_M_MUX_In1 = GRF_WD_MUX_Out;
+	assign RT_M_MUX_Op = RT_M_MUXsel;
+	
+	//stall
+	assign PC_En = !Stall;
+	assign FD_En = !Stall;
+	assign DE_clr = Stall;
+	
 endmodule

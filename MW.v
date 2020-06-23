@@ -3,7 +3,7 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date:    02:07:21 11/25/2019 
+// Create Date:    02:32:18 11/30/2019
 // Design Name: 
 // Module Name:    MW 
 // Project Name: 
@@ -18,41 +18,40 @@
 // Additional Comments: 
 //
 //////////////////////////////////////////////////////////////////////////////////
-module MW(
-	 input clk,
-	 input reset,
-    input [31:0] ALUResult,
-    input [31:0] MemData,
-    input [31:0] PC4,
-    input [31:0] IR,
-    input [4:0] RFAddr,
-    output reg [31:0] ALUResultO,
-    output reg [31:0] MemDataO,
-    output reg [31:0] PC4O,
-    output reg [31:0] IRO,
-    output reg [4:0] RFAddrO
+module mw(
+	input clk,
+	input reset,
+	input [31:0] nInstr_W,
+	input [31:0] nALU_W,
+	input [31:0] nDM_W,
+	input [31:0] nEXT_W,
+	input [31:0] nPC8_W,
+	input [4:0] nWBA_W,
+	output reg [31:0] Instr_W = 0,
+	output reg [31:0] ALU_W = 0,
+	output reg [31:0] DM_W = 0,
+	output reg [31:0] EXT_W = 0,
+	output reg [31:0] PC8_W = 0,
+	output reg [4:0] WBA_W = 0
     );
-	initial begin
-		ALUResultO = 0;
-		MemDataO = 0;
-		PC4O = 32'h3004;
-		IRO = 0;
-		RFAddrO = 0;
-	end
+
 	always @(posedge clk) begin
 		if (reset) begin
-			ALUResultO = 0;
-			MemDataO = 0;
-			PC4O = 32'h3004;
-			IRO = 0;
-			RFAddrO = 0;
+			Instr_W = 0;
+			ALU_W = 0;
+			DM_W = 0;
+			EXT_W = 0;
+			PC8_W = 0;
+			WBA_W = 0;
 		end
 		else begin
-			ALUResultO = ALUResult;
-			MemDataO = MemData;
-			PC4O = PC4;
-			IRO = IR;
-			RFAddrO = RFAddr;
+			Instr_W = nInstr_W;
+			ALU_W = nALU_W;
+			DM_W = nDM_W;
+			EXT_W = nEXT_W;
+			PC8_W = nPC8_W;
+			WBA_W = nWBA_W;
 		end
 	end
+
 endmodule

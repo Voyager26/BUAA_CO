@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date:    23:44:17 11/18/2019 
+// Create Date:    17:37:15 11/21/2019 
 // Design Name: 
-// Module Name:    mux 
+// Module Name:    MUX 
 // Project Name: 
 // Target Devices: 
 // Tool versions: 
@@ -18,88 +18,74 @@
 // Additional Comments: 
 //
 //////////////////////////////////////////////////////////////////////////////////
+module mux2(
+	input [width-1:0] In0,
+	input [width-1:0] In1,
+	input Op,
+	output reg [width-1:0] Out
+    );
+	
+	parameter width = 32;
 
-//8chose 32bit
-module mux32in8(
-						input [2:0]ctl,
-						input [31:0] in0,	
-						input [31:0] in1, 	
-						input [31:0] in2,	
-						input [31:0] in3,
-						input [31:0] in4,	
-						input [31:0] in5,
-						input [31:0] in6,	
-						input [31:0] in7,
-						output reg [31:0] out
-					);
-   always @(*)
-		begin
-			case(ctl)
-			3'b000:	out = in0;
-			3'b001:	out = in1;
-			3'b010:	out = in2;
-			3'b011:	out = in3;
-			3'b100:	out = in4;
-			3'b101:	out = in5;
-			3'b110:	out = in6;
-			3'b111:	out = in7;
-			endcase
-		end
+	always @(*) begin
+		case (Op)
+			0: Out = In0;
+			1: Out = In1;
+		endcase
+	end
+
 endmodule
 
 
-//4chose 32bit
-module mux32in4(
-						input [1:0]ctl,
-						input [31:0] in0,	
-						input [31:0] in1, 	
-						input [31:0] in2,	
-						input [31:0] in3,		
-						output reg [31:0] out
-					);
-   always @(*)
-		begin
-			case(ctl)
-			2'b00:	out = in0;
-			2'b01:	out = in1;
-			2'b10:	out = in2;
-			2'b11:	out = in3;
-			endcase
-		end
-endmodule
+module mux4(
+	input [width-1:0] In0,
+	input [width-1:0] In1,
+	input [width-1:0] In2,
+	input [width-1:0] In3,
+	input [1:0] Op,
+	output reg [width-1:0] Out
+    );
+	
+	parameter width = 32;
 
-module mux32in2(
-						input ctl,
-						input [31:0] in0,	
-						input [31:0] in1, 	
-						output reg [31:0] out
-					);
-   always @(*)
-		begin
-			case(ctl)
-			0:	out = in0;
-			1:	out = in1;
-			endcase
-		end
+	always @(*) begin
+		case (Op)
+			0: Out = In0;
+			1: Out = In1;
+			2: Out = In2;
+			3: Out = In3;
+		endcase
+	end
+
 endmodule
 
 
-//3ѡ1 5bit
-module mux5	(
-						input [1:0] ctl,
-					
-						input [4:0] in0,
-						input [4:0] in1,
-						input [4:0] in2,
-						
-						output reg [4:0] out
-					);
-	 always @(*)
-		begin
-			case(ctl)
-			2'b00:	out = in0;
-			2'b01:	out = in1;
-			2'b10:	out = in2;
-			endcase
-		end
+module mux8(
+	input [width-1:0] In0,
+	input [width-1:0] In1,
+	input [width-1:0] In2,
+	input [width-1:0] In3,
+	input [width-1:0] In4,
+	input [width-1:0] In5,
+	input [width-1:0] In6,
+	input [width-1:0] In7,
+	input [2:0] Op,
+	output reg [width-1:0] Out
+    );
+	
+	parameter width = 32;
+
+	always @(*) begin
+		case (Op)
+			0: Out = In0;
+			1: Out = In1;
+			2: Out = In2;
+			3: Out = In3;
+			4: Out = In4;
+			5: Out = In5;
+			6: Out = In6;
+			7: Out = In7;
+		endcase
+	end
+
 endmodule

@@ -3,7 +3,7 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date:    23:22:08 11/24/2019 
+// Create Date:    01:45:30 11/30/2019 
 // Design Name: 
 // Module Name:    FD 
 // Project Name: 
@@ -18,36 +18,29 @@
 // Additional Comments: 
 //
 //////////////////////////////////////////////////////////////////////////////////
-module Fd(
-    input [31:0] IR_F,
-    input [31:0] PC4_F,
-	 input [31:0] PC8_F,
-    input en,
-    input clk,
-	 input reset,
-    input clr,
-    output reg [31:0] PC4_D,
-	 output reg [31:0] PC8_D,
-    output reg [31:0] IR_D
+module fd(
+	input clk,
+	input reset,
+	input En,
+	input [31:0] nInstr_D,
+	input [31:0] nPC8_D,
+	output reg [31:0] Instr_D,
+	output reg [31:0] PC8_D
     );
 	initial begin
-		IR_D = 0;
-		PC4_D = 32'h3004;
+		Instr_D = 0;
 		PC8_D = 32'h3008;
 	end
 	
 	always @(posedge clk) begin
 		if (reset) begin
-			IR_D = 0;
-			PC4_D = 32'h3004;
+			Instr_D = 0;
 			PC8_D = 32'h3008;
 		end
-		else if (en) begin
-			IR_D = IR_F;
-			PC4_D = PC4_F;
-			PC8_D = PC8_F;
+		else if (En) begin
+			Instr_D = nInstr_D;
+			PC8_D = nPC8_D;
 		end
 	end
-	
 
 endmodule

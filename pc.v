@@ -3,9 +3,9 @@
 // Company: 
 // Engineer: 
 // 
-// Create Date:    21:11:09 11/19/2019 
+// Create Date:    01:18:21 11/20/2019 
 // Design Name: 
-// Module Name:    pc 
+// Module Name:    PC 
 // Project Name: 
 // Target Devices: 
 // Tool versions: 
@@ -19,20 +19,20 @@
 //
 //////////////////////////////////////////////////////////////////////////////////
 module pc(
-    input [31:0] NPc,
-    input clk,
-    input reset,
-	 input en,
-    output reg [31:0] Pc
+	input clk,
+	input reset,
+	input En,
+	input [31:0] nPC,
+	output reg [31:0] PC
     );
-	initial
-		begin
-			Pc = 32'h0000_3000;	
-		end
-	always@(posedge clk)
-		begin
-			if(reset) Pc = 32'h0000_3000;
-			else if(en) Pc = NPc;
-		end
-
+	initial begin
+		PC = 32'h3000;
+	end
+	always @(posedge clk) begin
+		if (reset)
+			PC = 32'h3000;
+		else if (En)
+			PC = nPC;
+	end
+	
 endmodule
