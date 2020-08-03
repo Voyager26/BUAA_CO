@@ -41,6 +41,8 @@ module grf(
 	initial begin
 		for (i = 0; i < 32; i = i + 1)
 			REG[i] = 0;
+		REG[28] = 32'h00001800;
+		REG[29] = 32'h00002ffc;
 	end
 	
 	always @(posedge clk) begin

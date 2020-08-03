@@ -137,9 +137,9 @@ module ctrl(
 		ALUsel[0] = sub | subu | ior | inor | srlv | srl | ori | slt | slti;
 		ALU_A_MUXsel = srl | sra;
 		ALU_B_MUXsel = addi | addiu | andi | ori | xori | slti | sltiu | sw | sh | sb | lw | lh | lb | lhu | lbu ;
-		MDUsel[2] = divu | mtlo | mthi;
-		MDUsel[1] = multu | div;
-		MDUsel[0] = mult | div | mthi;
+		MDUsel[2] = divu | mtlo | mthi | mtlo;
+		MDUsel[1] = multu | div | mthi;
+		MDUsel[0] = mult | div | mtlo;
 		Start = mult | multu | div | divu | mtlo;
 		MDU_RDsel = mfhi;
 		ALU_MDU_MUXsel = mflo | mfhi;

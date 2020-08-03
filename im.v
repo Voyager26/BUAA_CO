@@ -30,7 +30,7 @@ module im(
 	initial begin 
 		for (i = 0; i < 4096; i = i + 1)
 			ROM[i] = 0;
-		$readmemh("code.txt", ROM);
+			$readmemh("code.txt", ROM);
 	end
 	
 	wire [31:0] A1 = A - 32'h3000;		//Ƭѡ
